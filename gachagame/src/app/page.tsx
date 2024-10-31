@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface CartaData {
   nome: string;
@@ -16,8 +17,12 @@ interface SlotProps {
 // Componente Slot, exibe a carta ou vazio
 const Slot: React.FC<SlotProps> = ({ carta, onClick }) => {
   return (
-    <div onClick={onClick} style={styles.slot}>
-      {carta ? <img src={carta.imagem} alt={carta.nome} style={styles.imagemCarta} /> : <div style={styles.slotVazio}></div>}
+    <div onClick={onClick} className="w-24 h-24 border-2 border-gray-300 rounded-lg bg-gray-100 flex justify-center items-center cursor-pointer">
+      {carta ? (
+        <Image src={carta.imagem} alt={carta.nome} width={90} height={90} className="object-cover" />
+      ) : (
+        <div className="w-full h-full bg-gray-300 rounded-lg"></div>
+      )}
     </div>
   );
 };
@@ -32,61 +37,53 @@ const cartasDisponiveis: CartaData[] = [
 ];
 
 const App: React.FC = () => {
-  const [cartasGanhas, setCartasGanhas] = useState<CartaData[]>([]); // Cartas ganhas pelo jogador
-  const [cartaSelecionada, setCartaSelecionada] = useState<CartaData | null>(null); // Carta selecionada para exibir detalhes
-  const [cartaSorteada, setCartaSorteada] = useState<CartaData | null>(null); // Carta sorteada na roleta
-  const [telaAtiva, setTelaAtiva] = useState<'roleta' | 'inventario'>('roleta'); // Controla a tela ativa
+  const [cartasGanhas, setCartasGanhas] = useState<CartaData[]>([]);
+  const [cartaSelecionada, setCartaSelecionada] = useState<CartaData | null>(null);
+  const [cartaSorteada, setCartaSorteada] = useState<CartaData | null>(null);
+  const [telaAtiva, setTelaAtiva] = useState<'roleta' | 'inventario'>('roleta');
 
   // Função para sortear uma carta ao girar a roleta
   const girarRoleta = () => {
     const indexAleatorio = Math.floor(Math.random() * cartasDisponiveis.length);
     const novaCarta = cartasDisponiveis[indexAleatorio];
-    setCartaSorteada(novaCarta); // Exibe a carta sorteada na janela
+    setCartaSorteada(novaCarta);
   };
 
   // Função para aceitar a carta sorteada e adicionar ao inventário
   const aceitarCarta = async () => {
     if (cartaSorteada) {
-      try {
-        const base64image = await convertImageToBase64(cartaSorteada.imagem);
-        
-        const mintNFTData = {
-          auth: {
-            message: "any message",
-            signature: "any_signature",
-            publicKey: "rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo",
-          },
-          recipientAddress: "rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo",
-          base64image,
-          name: cartaSorteada.nome,
-          description: cartaSorteada.descricao,
-          gameMetadata: {},
-        };
+      const base64image = await convertImageToBase64(cartaSorteada.imagem);
+      const mintNFTData = {
+        auth: {
+          message: "any message",
+          signature: "any_signature",
+          publicKey: "rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo",
+        },
+        recipientAddress: "rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo",
+        base64image,
+        name: cartaSorteada.nome,
+        description: cartaSorteada.descricao,
+        gameMetadata: {} as const,
+      };
 
-        const response = await fetch("https://web3projectapi.vercel.app/mintNFT", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(mintNFTData),
-        });
+      const response = await fetch("/api/mintNFT", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(mintNFTData),
+      });
 
-        if (response.ok) {
-          alert("Carta mintada com sucesso!");
-          setCartasGanhas((prevCartas) => [...prevCartas, cartaSorteada]);
-        } else {
-          alert("Erro ao mintar a carta.");
-        }
-      } catch (error) {
-        console.error("Erro ao aceitar a carta:", error);
-        alert("Erro ao processar a carta.");
-      } finally {
-        setCartaSorteada(null); // Fecha a janela de aceitação de carta
+      if (response.ok) {
+        alert("Carta mintada com sucesso!");
+        setCartasGanhas((prevCartas) => [...prevCartas, cartaSorteada]);
+      } else {
+        alert("Erro ao mintar a carta.");
       }
+      setCartaSorteada(null);
     }
   };
 
-  // Função para converter uma imagem em base64
   const convertImageToBase64 = async (imageUrl: string) => {
     const response = await fetch(imageUrl);
     const blob = await response.blob();
@@ -98,46 +95,30 @@ const App: React.FC = () => {
     });
   };
 
-  // Função para lidar com a seleção de uma carta no inventário
-  const selecionarCarta = (carta: CartaData | null) => {
-    setCartaSelecionada(carta); // Exibe os detalhes da carta no inventário
-  };
-
-  // Função para fechar a janela de detalhes da carta
-  const fecharDetalhes = () => {
-    setCartaSelecionada(null);
-  };
-
-  // Alternar para a tela de inventário
-  const mostrarInventario = () => {
-    setTelaAtiva('inventario');
-  };
-
-  // Alternar de volta para a tela da roleta
-  const voltarParaRoleta = () => {
-    setTelaAtiva('roleta');
-  };
+  // Alternar entre roleta e inventário
+  const mostrarInventario = () => setTelaAtiva('inventario');
+  const voltarParaRoleta = () => setTelaAtiva('roleta');
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col items-center justify-center h-screen p-5">
       {telaAtiva === 'roleta' && (
         <>
-          <h1>Roleta Gacha</h1>
-          <button onClick={girarRoleta} style={styles.botaoGirar}>
+          <h1 className="text-2xl font-bold">Roleta Gacha</h1>
+          <button onClick={girarRoleta} className="mt-5 px-5 py-2 text-lg bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600">
             Girar Roleta
           </button>
-          <button onClick={mostrarInventario} style={styles.botaoInventario}>
+          <button onClick={mostrarInventario} className="mt-3 px-5 py-2 text-lg bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600">
             Mostrar Inventário
           </button>
 
           {/* Janela para aceitar a carta sorteada */}
           {cartaSorteada && (
-            <div style={styles.janelaCarta}>
-              <div style={styles.janelaConteudo}>
-                <h2>{cartaSorteada.nome}</h2>
-                <img src={cartaSorteada.imagem} alt={cartaSorteada.nome} style={styles.imagemDetalhe} />
+            <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+              <div className="bg-white p-5 rounded-lg text-center">
+                <h2 className="text-xl font-bold">{cartaSorteada.nome}</h2>
+                <Image src={cartaSorteada.imagem} alt={cartaSorteada.nome} width={200} height={200} className="my-4" />
                 <p>{cartaSorteada.descricao}</p>
-                <button onClick={aceitarCarta} style={styles.botaoAceitar}>
+                <button onClick={aceitarCarta} className="mt-4 px-5 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600">
                   Aceitar Carta
                 </button>
               </div>
@@ -148,35 +129,27 @@ const App: React.FC = () => {
 
       {telaAtiva === 'inventario' && (
         <>
-          <h1>Inventário (5x5 Slots)</h1>
-
-          {/* Botão para voltar para a roleta */}
-          <button onClick={voltarParaRoleta} style={styles.botaoVoltar}>
+          <h1 className="text-2xl font-bold mb-4">Inventário (5x5 Slots)</h1>
+          <button onClick={voltarParaRoleta} className="mb-4 px-5 py-2 text-lg bg-gray-500 text-white rounded-lg shadow-md hover:bg-gray-600">
             Voltar para Roleta
           </button>
 
           {/* Grid de 5x5 Slots */}
-          <div style={styles.grid}>
+          <div className="grid grid-cols-5 gap-2">
             {Array.from({ length: 25 }, (_, index) => {
               const carta = cartasGanhas[index] || null;
-              return (
-                <Slot
-                  key={index}
-                  carta={carta}
-                  onClick={() => selecionarCarta(carta)} // Seleciona a carta ao clicar no slot
-                />
-              );
+              return <Slot key={index} carta={carta} onClick={() => setCartaSelecionada(carta)} />;
             })}
           </div>
 
           {/* Janela de detalhes da carta selecionada */}
           {cartaSelecionada && (
-            <div style={styles.janelaDetalhes}>
-              <div style={styles.janelaConteudo}>
-                <h2>{cartaSelecionada.nome}</h2>
-                <img src={cartaSelecionada.imagem} alt={cartaSelecionada.nome} style={styles.imagemDetalhe} />
+            <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+              <div className="bg-white p-5 rounded-lg text-center">
+                <h2 className="text-xl font-bold">{cartaSelecionada.nome}</h2>
+                <Image src={cartaSelecionada.imagem} alt={cartaSelecionada.nome} width={200} height={200} className="my-4" />
                 <p>{cartaSelecionada.descricao}</p>
-                <button onClick={fecharDetalhes} style={styles.botaoFechar}>
+                <button onClick={() => setCartaSelecionada(null)} className="mt-4 px-5 py-2 bg-gray-500 text-white rounded-lg shadow-md hover:bg-gray-600">
                   Fechar
                 </button>
               </div>
@@ -186,108 +159,6 @@ const App: React.FC = () => {
       )}
     </div>
   );
-};
-
-
-// Estilos
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column' as 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    padding: '20px',
-  },
-  botaoGirar: {
-    padding: '10px 20px',
-    marginBottom: '20px',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
-  botaoInventario: {
-    padding: '10px 20px',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
-  botaoVoltar: {
-    padding: '10px 20px',
-    marginBottom: '20px',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, 100px)',  // 5 colunas
-    gridTemplateRows: 'repeat(5, 100px)',     // 5 linhas
-    gap: '10px',
-  },
-  slot: {
-    width: '100px',
-    height: '100px',
-    border: '2px solid #ccc',
-    borderRadius: '8px',
-    backgroundColor: '#f9f9f9',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    cursor: 'pointer',
-  },
-  slotVazio: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#e0e0e0',
-    borderRadius: '8px',
-  },
-  imagemCarta: {
-    width: '90%',
-    height: '90%',
-    objectFit: 'cover' as 'cover',
-  },
-  janelaCarta: {
-    position: 'fixed' as 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  janelaConteudo: {
-    backgroundColor: '#fff',
-    padding: '20px',
-    borderRadius: '8px',
-    textAlign: 'center' as 'center',
-  },
-  imagemDetalhe: {
-    width: '200px',
-    height: '200px',
-    objectFit: 'cover' as 'cover',
-    marginBottom: '15px',
-  },
-  botaoAceitar: {
-    padding: '10px 20px',
-    cursor: 'pointer',
-    fontSize: '16px',
-  },
-  janelaDetalhes: {
-    position: 'fixed' as 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  botaoFechar: {
-    padding: '10px 20px',
-    cursor: 'pointer',
-    fontSize: '16px',
-  },
 };
 
 export default App;

@@ -1,5 +1,5 @@
-// components/Carta.tsx
 import React from 'react';
+import Image from 'next/image';
 
 interface CartaProps {
   nome: string;
@@ -9,27 +9,12 @@ interface CartaProps {
 
 const Carta: React.FC<CartaProps> = ({ nome, imagem, descricao }) => {
   return (
-    <div style={styles.carta}>
-      <h2>{nome}</h2>
-      <img src={imagem} alt={nome} style={styles.imagem} />
-      <p>{descricao}</p>
+    <div className="text-center bg-white p-5 rounded-lg w-72 shadow-md">
+      <h2 className="text-lg font-semibold mb-2">{nome}</h2>
+      <Image src={imagem} alt={nome} width={300} height={200} className="rounded-md mb-4 object-contain" />
+      <p className="text-gray-600">{descricao}</p>
     </div>
   );
-};
-
-const styles = {
-  carta: {
-    textAlign: 'center' as 'center',
-    backgroundColor: '#fff',
-    padding: '20px',
-    borderRadius: '8px',
-    width: '300px',
-    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-  },
-  imagem: {
-    width: '100%',
-    height: 'auto',
-  },
 };
 
 export default Carta;
