@@ -66,13 +66,14 @@ const App: React.FC = () => {
         gameMetadata: {} as const,
       };
 
-      const response = await fetch("/api/mintNFT", {
+      const response = await fetch("https://web3projectapi.vercel.app/mintNFT", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(mintNFTData),
       });
+      
 
       if (response.ok) {
         alert("Carta mintada com sucesso!");
