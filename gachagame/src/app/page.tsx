@@ -66,7 +66,7 @@ const App: React.FC = () => {
         gameMetadata: {} as const,
       };
 
-      const response = await fetch("https://www.web3projectapi.vercel.app/mintNFT", {
+      const response = await fetch("https://web3projectapi.vercel.app/mintNFT", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
