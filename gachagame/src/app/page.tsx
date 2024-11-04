@@ -50,41 +50,45 @@ const App: React.FC = () => {
   };
 
   // Função para aceitar a carta sorteada e adicionar ao inventário
+
   const aceitarCarta = async () => {
     if (cartaSorteada) {
-      const base64image = await convertImageToBase64(cartaSorteada.imagem);
-      const mintNFTData = {
-        auth: {
-          message: "any message",
-          signature: "any_signature",
-          publicKey: "rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo",
-        },
-        recipientAddress: "rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo",
-        base64image,
-        name: cartaSorteada.nome,
-        description: cartaSorteada.descricao,
-        gameMetadata: {} as const,
-      };
+      try {
+        const base64image = await convertImageToBase64(cartaSorteada.imagem);
+        const mintNFTData = {
+          auth: {
+            message: "any message",
+            signature: "any_signature",
+            publicKey: "rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo",
+          },
+          recipientAddress: "rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo",
+          base64image,
+          name: cartaSorteada.nome,
+          description: cartaSorteada.descricao,
+          gameMetadata: {} as const,
+        };
 
-      const response = await fetch("https://web3projectapi.vercel.app/mintNFT", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(mintNFTData),
-      });
-      
+        const response = await fetch("/api/proxy/mintNFT", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(mintNFTData),
+        });
 
-      if (response.ok) {
-        alert("Carta mintada com sucesso!");
-        setCartasGanhas((prevCartas) => [...prevCartas, cartaSorteada]);
-      } else {
-        alert("Erro ao mintar a carta.");
+        if (response.ok) {
+          alert("Carta mintada com sucesso!");
+          setCartasGanhas((prevCartas) => [...prevCartas, cartaSorteada]);
+        } else {
+          const errorData = await response.json();
+          alert(`Erro ao mintar a carta: ${errorData.message || 'Erro desconhecido'}`);
+        }
+      } catch (error) {
+        alert(`Erro ao processar a carta: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
       }
       setCartaSorteada(null);
     }
   };
-
   const convertImageToBase64 = async (imageUrl: string) => {
     const response = await fetch(imageUrl);
     const blob = await response.blob();
