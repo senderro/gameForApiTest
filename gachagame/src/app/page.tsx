@@ -14,7 +14,6 @@ interface SlotProps {
   onClick: () => void;
 }
 
-// Componente Slot, exibe a carta ou vazio
 const Slot: React.FC<SlotProps> = ({ carta, onClick }) => {
   return (
     <div onClick={onClick} className="w-24 h-24 border-2 border-gray-300 rounded-lg bg-gray-100 flex justify-center items-center cursor-pointer">
@@ -27,13 +26,11 @@ const Slot: React.FC<SlotProps> = ({ carta, onClick }) => {
   );
 };
 
-// Lista de cartas disponíveis (para preencher o inventário)
 const cartasDisponiveis: CartaData[] = [
   { nome: 'Carta 1', imagem: '/cartas/carta1.png', descricao: 'Descrição da Carta 1' },
   { nome: 'Carta 2', imagem: '/cartas/carta2.png', descricao: 'Descrição da Carta 2' },
   { nome: 'Carta 3', imagem: '/cartas/carta3.png', descricao: 'Descrição da Carta 3' },
-  { nome: 'Carta 4', imagem: '/cartas/carta4.png', descricao: 'Descrição da Carta 4' },
-  { nome: 'Carta 5', imagem: '/cartas/carta5.png', descricao: 'Descrição da Carta 5' },
+  { nome: 'Carta 4', imagem: '/cartas/carta4.png', descricao: 'Descrição da Carta 4' }, 
 ];
 
 const App: React.FC = () => {
@@ -42,14 +39,12 @@ const App: React.FC = () => {
   const [cartaSorteada, setCartaSorteada] = useState<CartaData | null>(null);
   const [telaAtiva, setTelaAtiva] = useState<'roleta' | 'inventario'>('roleta');
 
-  // Função para sortear uma carta ao girar a roleta
   const girarRoleta = () => {
     const indexAleatorio = Math.floor(Math.random() * cartasDisponiveis.length);
     const novaCarta = cartasDisponiveis[indexAleatorio];
     setCartaSorteada(novaCarta);
   };
 
-  // Função para aceitar a carta sorteada e adicionar ao inventário
   const aceitarCarta = async () => {
     if (cartaSorteada) {
       const base64image = await convertImageToBase64(cartaSorteada.imagem);
@@ -66,14 +61,13 @@ const App: React.FC = () => {
         gameMetadata: {} as const,
       };
 
-      const response = await fetch("https://web3projectapi.vercel.app/mintNFT", {
+      const response = await fetch("/api/web3Api/mintNft", {  // Agora a chamada é feita para sua API interna
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(mintNFTData),
       });
-      
 
       if (response.ok) {
         alert("Carta mintada com sucesso!");
@@ -96,7 +90,6 @@ const App: React.FC = () => {
     });
   };
 
-  // Alternar entre roleta e inventário
   const mostrarInventario = () => setTelaAtiva('inventario');
   const voltarParaRoleta = () => setTelaAtiva('roleta');
 
@@ -112,7 +105,6 @@ const App: React.FC = () => {
             Mostrar Inventário
           </button>
 
-          {/* Janela para aceitar a carta sorteada */}
           {cartaSorteada && (
             <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
               <div className="bg-white p-5 rounded-lg text-center">
@@ -135,7 +127,6 @@ const App: React.FC = () => {
             Voltar para Roleta
           </button>
 
-          {/* Grid de 5x5 Slots */}
           <div className="grid grid-cols-5 gap-2">
             {Array.from({ length: 25 }, (_, index) => {
               const carta = cartasGanhas[index] || null;
@@ -143,7 +134,6 @@ const App: React.FC = () => {
             })}
           </div>
 
-          {/* Janela de detalhes da carta selecionada */}
           {cartaSelecionada && (
             <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
               <div className="bg-white p-5 rounded-lg text-center">
