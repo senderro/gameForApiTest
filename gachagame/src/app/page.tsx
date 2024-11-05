@@ -58,7 +58,7 @@ const App: React.FC = () => {
         base64image,
         name: cartaSorteada.nome,
         description: cartaSorteada.descricao,
-        gameMetadata: {} as const,
+        gameMetadata: {},
       };
 
       const response = await fetch("/api/web3Api/mintNft", {  // Agora a chamada é feita para sua API interna
