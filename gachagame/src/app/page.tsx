@@ -38,29 +38,27 @@ const cartasDisponiveis: CartaData[] = [
 ];
 
 const App: React.FC = () => {
+  const [userAddress, setUserAddress] = useState<string>('rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo'); // Estado para o endereço do usuário com valor padrão
   const [cartasGanhas, setCartasGanhas] = useState<CartaData[]>([]);
   const [cartaSelecionada, setCartaSelecionada] = useState<CartaData | null>(null);
   const [cartaSorteada, setCartaSorteada] = useState<CartaData | null>(null);
   const [telaAtiva, setTelaAtiva] = useState<'roleta' | 'inventario'>('roleta');
-  const [loading, setLoading] = useState<boolean>(true); // Estado para controlar o carregamento
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Função para buscar os NFTs do usuário e adicioná-los ao inventário
   const fetchUserNfts = async () => {
     try {
-      setLoading(true); // Inicia o carregamento
-      const response = await fetch('/api/web3Api/getAccountNfts/rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo'); // URL da API que criamos
+      setLoading(true);
+      const response = await fetch(`/api/web3Api/getAccountNfts/${userAddress}`);
       if (response.ok) {
         const data = await response.json();
-        const nfts = data.nfts; // A API retorna um array com os NFTs
+        const nfts = data.nfts;
 
-        // Mapear os NFTs retornados para o formato do inventário
         const cartasDoUsuario = nfts.map((nft: getNftFromAccount) => ({
           nome: nft.name || 'NFT Desconhecido',
-          imagem: nft.base64image || '', // Adiciona a imagem base64
+          imagem: nft.base64image || '',
           descricao: nft.description || 'Sem descrição',
         }));
 
-        // Atualiza o inventário do usuário com as cartas que vieram da API
         setCartasGanhas(cartasDoUsuario);
       } else {
         console.error('Erro ao buscar NFTs do usuário.');
@@ -68,12 +66,11 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Erro ao buscar NFTs:', error);
     } finally {
-      setLoading(false); // Finaliza o carregamento
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Busca os NFTs do usuário ao carregar o componente
     fetchUserNfts();
   }, []);
 
@@ -86,18 +83,37 @@ const App: React.FC = () => {
   const aceitarCarta = async () => {
     if (cartaSorteada) {
       const base64image = await convertImageToBase64(cartaSorteada.imagem);
+      const message = 'any message';
+      
+      const res = await fetch('/api/signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+  
+      if (!res.ok) {
+        alert('Erro ao assinar a mensagem.');
+        return;
+      }
+      const classicAddress = "rspgmhbbCRjkDbjFu4P2MX1agUGDEShYbf";
+      const publicKey = "ED52AA41BB9385469BF70EEF9397496C608A08FA44B14D1F75137CF4D6B03397E2";
+      const {signature } = await res.json();
+
+
       const mintNFTData = {
         auth: {
-          message: 'any message',
-          signature: 'any_signature',
-          publicKey: 'rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo',
+          message,
+          signature,
+          publicKey,
         },
-        recipientAddress: 'rG88FVLjvYiQaGftSa1cKuE2qNx7aK5ivo',
+        recipientAddress: userAddress,
         base64image,
         name: cartaSorteada.nome,
         description: cartaSorteada.descricao,
         gameMetadata: {},
+        classicAddress
       };
+
 
       const response = await fetch('/api/web3Api/mintNft', {
         method: 'POST',
@@ -133,6 +149,16 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen p-5">
+      {/* Input para o endereço do usuário */}
+      <label className="mb-2 text-lg font-semibold">Endereço do Usuário:</label>
+      <input
+        type="text"
+        value={userAddress}
+        onChange={(e) => setUserAddress(e.target.value)}
+        className="px-4 py-2 border rounded-lg mb-4 w-full max-w-md"
+        placeholder="Insira o endereço do usuário"
+      />
+
       {telaAtiva === 'roleta' && (
         <>
           <h1 className="text-2xl font-bold">Roleta Gacha</h1>
@@ -178,13 +204,13 @@ const App: React.FC = () => {
           </button>
 
           <button
-            onClick={fetchUserNfts} // Botão para atualizar os NFTs do usuário
+            onClick={fetchUserNfts}
             className="mb-4 px-5 py-2 text-lg bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600"
           >
             Atualizar NFTs
           </button>
 
-          {loading ? ( // Exibe a mensagem de carregamento enquanto busca os NFTs
+          {loading ? (
             <div className="text-lg font-bold text-gray-700">Carregando NFTs...</div>
           ) : (
             <div className="grid grid-cols-5 gap-2">
